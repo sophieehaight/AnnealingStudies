@@ -77,6 +77,13 @@ def gauss_minus_linear_tail_pdf(x, BoverA, x0, sigma_gauss, gamma, CoverB, D, si
     # Evaluate array x over scalar norm
     return gauss_minus_linear_tail_depth(x, 1.0, BoverA, x0, sigma_gauss, gamma, CoverB, D, sigma_ratio, background) / norm
 
+### Photopeak line profile used by make_depthplot: gaussian plus exponential and linear low-energy tails,
+### both cut off above the peak by a shelf of width sigma_gauss*sigma_ratio. Peak amplitude is 1.
+def gauss_plus_tail(x, BoverA, x0, sigma_gauss, gamma, CoverB, D, sigma_ratio):
+    sigma_shelf = sigma_gauss*sigma_ratio
+    return gaussian(x, x0, sigma_gauss) + \
+           BoverA*(exp_tail(x, x0, sigma_shelf, gamma) + CoverB*linear_tail(x, x0, sigma_shelf, D))*shelf_scipy(x, x0, sigma_shelf)
+
 ### We need a normalized version in order to perform unbinned fitting.
 def gauss_plus_tail_pdf(x, BoverA, x0, sigma_gauss, gamma, CoverB, D, sigma_ratio, Emin = 640., Emax = 672.):
     return gauss_plus_tail(x, BoverA, x0, sigma_gauss, gamma, CoverB, D, sigma_ratio)/\
@@ -651,8 +658,8 @@ def make_depthplot(df, plot_suffix, z_bins, plot_dir="/Users/Sophie/Desktop/COSI
                                (hist[hist>0] - A*gauss_plus_tail(bin_centers[hist>0],BoverA, x0, sigma_gauss, global_gamma, global_CoverB, global_D, global_sigma_ratio))/np.sqrt(hist[hist>0]), \
                                xerr=(bin_centers[1]-bin_centers[0])/2, yerr=1., ls='', lw=0.6, color=color)
             ax.plot(bin_centers,A*gaussian(bin_centers, x0, sigma_gauss),color= color, ls='--', lw=0.5)
-            ax.plot(bin_centers, B*exp_tail(bin_centers, x0, gamma=global_gamma)*shelf(bin_centers, x0, sigma_gauss*global_sigma_ratio),color= color, ls='--', lw=0.5)
-            ax.plot(bin_centers, C*linear_tail(bin_centers, x0, global_D)*shelf(bin_centers, x0, sigma_gauss*global_sigma_ratio),color= color, ls='--', lw=0.5)
+            ax.plot(bin_centers, B*exp_tail(bin_centers, x0, sigma_gauss*global_sigma_ratio, global_gamma)*shelf_scipy(bin_centers, x0, sigma_gauss*global_sigma_ratio),color= color, ls='--', lw=0.5)
+            ax.plot(bin_centers, C*linear_tail(bin_centers, x0, sigma_gauss*global_sigma_ratio, global_D)*shelf_scipy(bin_centers, x0, sigma_gauss*global_sigma_ratio),color= color, ls='--', lw=0.5)
             ax.axvline(x0, ls='--', color='C3')
             ax.axvline(line_e, ls='--', color='C2')
             if j==0:
