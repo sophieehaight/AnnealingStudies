@@ -771,6 +771,14 @@ def depth_correction(df, z_bins, e_trapping, h_trapping, plot_dir="/Users/Sophie
 
     return df
 
+def load_sim_dCCE(sim_dCCE_path):
+    ### Return the simulated dCCE table as rows [depth, e_b, e_c, h_b, h_c].
+    ### Some CSVs (e.g. HP41520_1) store these as columns instead, so transpose when needed.
+    sim_dCCE = np.genfromtxt(sim_dCCE_path, delimiter=',')
+    if sim_dCCE.shape[0] > sim_dCCE.shape[1]:
+        sim_dCCE = sim_dCCE.T
+    return sim_dCCE
+
 def depth_correction_CCE(df, ae, ah, b, c, sim_dCCE_path, plot_dir="//Users/Sophie/Desktop/COSI/calibrations/Data/trapping_figures/", plot_suffix='', source='Cs137'):
     ### Correct measured energy on an event-by-event basis using the charge collection efficiency parameters.
     ### Return the dataset with corrected energies in new columns.
@@ -778,7 +786,7 @@ def depth_correction_CCE(df, ae, ah, b, c, sim_dCCE_path, plot_dir="//Users/Soph
         print('Source not recognized. Must be one of the following: Am241, Cs137, Ba133, Co57')
     line_e = source_dict[source]
 
-    sim_dCCE = np.genfromtxt(sim_dCCE_path, delimiter=',')
+    sim_dCCE = load_sim_dCCE(sim_dCCE_path)
 
     ### TODO: double check why I flipped the y values. Presumably p and n are flipped compared to simulations.
     e_cce = UnivariateSpline(sim_dCCE[0], ae*(1.-b*sim_dCCE[1][::-1])*(1.-c*sim_dCCE[2][::-1]))
@@ -869,7 +877,7 @@ def fit_CCE(z_bins, e_trapping, h_trapping, sim_dCCE_path, plot_dir="/Users/Soph
         print('Source not recognized. Must be one of the following: Am241, Cs137, Ba133, Co57')
     line_e = source_dict[source]
 
-    sim_dCCE = np.genfromtxt(sim_dCCE_path, delimiter=',')
+    sim_dCCE = load_sim_dCCE(sim_dCCE_path)
     # print(sim_dCCE)
 
     def e_depth_plot(z, ae, b, c):
